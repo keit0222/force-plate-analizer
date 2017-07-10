@@ -11,11 +11,14 @@ import glob,os
 import warnings
 
 class DataReader:
-    def __init__(self,relative_data_folder,filename,data_freq=1000,use_filename=True,ext_name='',use_ext_name=False,skiprows=6):
+    def __init__(self,relative_data_folder,filename,data_freq=1000,
+                 use_filename=True,ext_name='',use_ext_name=False,
+                 skiprows=0,column_name=[]):
         self.filename = filename
         self.relative_data_folder = relative_data_folder
         self.data_freq = data_freq
         self.skiprows = skiprows
+        self.column_name = column_name
         if use_filename == True:
             self.filenames = [self.filename]
         else:
@@ -33,11 +36,16 @@ class DataReader:
         self.read_data()
 
         print('Data read finishd.')
+        print(self.df_list)
 
     def read_data(self):
         for filename in self.filenames:
             relative_data_path = self.relative_data_folder+filename
-            force_plate_df = pd.read_csv(relative_data_path, skiprows=self.skiprows, header=None, names=['Fx','Fy','Fz','Mx','My','Mz','Syncro','Extln1','Extln2'])
+            if self.column_name == []:
+                force_plate_df = pd.read_csv(relative_data_path, skiprows=self.skiprows)
+            else:
+                force_plate_df = pd.read_csv(relative_data_path, skiprows=self.skiprows,
+                                             header=None, names=self.column_name)
             force_plate_end_time =  (len(force_plate_df)-1)/float(self.data_freq)
             force_plate_time = np.linspace(0,force_plate_end_time,len(force_plate_df))
             force_plate_df['time'] = force_plate_time

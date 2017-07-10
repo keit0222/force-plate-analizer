@@ -11,19 +11,28 @@ import matplotlib.pyplot as plt
 import warnings
 
 from scipy.signal import argrelmax,argrelmin
+import matplotlib.font_manager as fm
 
 from data_reader import DataReader
 
 class forceAnalyzer(DataReader):
     def __init__(self,relative_data_folder,filename):
-        super().__init__(relative_data_folder,filename)
+        super().__init__(relative_data_folder,filename,skiprows=6,
+                         column_name=['Fx','Fy','Fz','Mx','My','Mz','Syncro','ExtIn1','ExtIn2'])
+
+        # フォント一覧
+        fonts = fm.findSystemFonts()
+        # フォントのパスと名前を取得、とりあえず10個表示
+        print([[str(font), fm.FontProperties(fname=font).get_name()] for font in fonts[:20]])
 
         # Setting at the time of visualizing
         plt.style.use('ggplot')
-        font = {'family' : 'mbeiryo'}
+        font = {'family' : 'Yu Gothic'}
         matplotlib.rc('font', **font)
 
-
+        self.action_x = 0
+        self.action_y = 0
+        self.threshold_Fz = 3.0
 
     def moving_filter(self,x,window_size,min_periods):
         return pd.Series(x).rolling(window=window_size, min_periods=min_periods, center=True).mean().values
@@ -42,7 +51,6 @@ class forceAnalyzer(DataReader):
         idx = np.abs(array - num).argmin()
         return array[idx]
 
-
     def get_first_landing_point(self):
         x_max_peek = argrelmax(force_plate_data['Fz'].values,order=50)
         x_min_peek = argrelmin(force_plate_data['Fz'].values,order=100)
@@ -56,19 +64,36 @@ class forceAnalyzer(DataReader):
         first_landing_point = offset_peek_list[0]
         print('first landing point is ',first_landing_point)
 
-
     def export_from_first_landing_point(self):
         force_cutted_df = force_plate_data[first_landing_point:len(force_plate_data)]
         print(force_cutted_df)
         force_cutted_df.plot(y='Fz', figsize=(16,4), alpha=0.5)
         force_cutted_df.to_csv('force_plate_cutted_data_a6.csv')
 
+    def get_action_point(self,analysis_id=0,scale=1.):
+        Mx = self.df_list[analysis_id]['Mx'].values
+        My = self.df_list[analysis_id]['My'].values
+        Fz = self.df_list[analysis_id]['Fz'].values*scale
+        tmp_action_x = []
+        tmp_action_y = []
+        for mx,my,f in zip(Mx,My,Fz):
+            if abs(f) > self.threshold_Fz:
+                tmp_action_x.append(my/f)
+                tmp_action_y.append(mx/f)
+            else:
+                tmp_action_x.append(-1)
+                tmp_action_y.append(-1)
+        self.action_x = np.array(tmp_action_x)
+        self.action_y = np.array(tmp_action_y)
+        self.df_list[analysis_id]['action_x'] = self.action_x
+        self.df_list[analysis_id]['action_y'] = self.action_y
+        self.df_list[analysis_id].to_csv('test.csv')
 
     def plot(self,analysis_id=0):
         target_area = ['Fx','Fy','Fz','Mx','My','Mz']
 
         force_plate_data = self.df_list[analysis_id].copy()
-        print(force_plate_data)
+        # print(force_plate_data)
         column_name = force_plate_data.columns.values
 
         column_name_tmp = []
@@ -77,7 +102,7 @@ class forceAnalyzer(DataReader):
             column_name_tmp =  [name for name in column_name if target_name in name]
             column_name_tmp_array.extend(column_name_tmp)
         column_name = column_name_tmp_array
-        print(column_name)
+        # print(column_name)
 
         f = plt.figure()
         plt.title('Force plate csv data when liftting up object', color='black')
