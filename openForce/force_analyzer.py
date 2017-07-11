@@ -7,6 +7,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
 
 import warnings
 
@@ -39,6 +40,7 @@ class forceAnalyzer(DataReader):
         self.action_x = 0
         self.action_y = 0
         self.threshold_Fz = 3.0
+        self.get_action_point(scale=2.)
 
     def extract_syncronized_data(self,analysis_id=0):
         df = self.df_list[analysis_id]
@@ -51,6 +53,10 @@ class forceAnalyzer(DataReader):
 
     def EMA(self,x, alpha):
         return pd.Series(x).ewm(alpha=alpha).mean()
+
+    def get_peek_action_point(self,analysis_id=0):
+        return [self.df_list[analysis_id]['action_x'].values[self.max_peek],
+                self.df_list[analysis_id]['action_y'].values[self.max_peek]]
 
     def getNearestValue(self,array, num):
         """
@@ -94,8 +100,8 @@ class forceAnalyzer(DataReader):
         force_cutted_df.to_csv('force_plate_cutted_data_a6.csv')
 
     def get_action_point(self,analysis_id=0,scale=1.):
-        Mx = self.df_list[analysis_id]['Mx'].values
-        My = self.df_list[analysis_id]['My'].values
+        Mx = self.df_list[analysis_id]['Mx'].values*scale
+        My = self.df_list[analysis_id]['My'].values*scale
         Fz = self.df_list[analysis_id]['Fz'].values*scale
         tmp_action_x = []
         tmp_action_y = []
@@ -111,6 +117,18 @@ class forceAnalyzer(DataReader):
         self.df_list[analysis_id]['action_x'] = self.action_x
         self.df_list[analysis_id]['action_y'] = self.action_y
         self.df_list[analysis_id].to_csv('test.csv')
+
+    def plot_peek_action_point(self):
+        xs,ys =self.get_peek_action_point()
+        f = plt.figure()
+        i = 0
+        for x,y in zip(xs,ys):
+            plt.plot(x, y, "o", color=cm.spectral(i/10.0))
+            i += 1
+        f.subplots_adjust(right=0.8)
+        plt.show()
+        plt.close()
+
 
     def plot(self,analysis_id=0):
         target_area = ['Fx','Fy','Fz','Mx','My','Mz']
