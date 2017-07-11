@@ -139,7 +139,16 @@ class forceAnalyzer(DataReader):
 class motionAnalyzer(DataReader):
     def __init__(self,relative_data_folder,filename):
         super().__init__(relative_data_folder,filename,data_freq=100)
+        self.simple_modify_data()
         self.peek_time = 0
+
+    def simple_modify_data(self):
+        for df in self.df_list:
+            for i in range(len(df)-1):
+                tmp = df.iloc[i+1]
+                for j,x in enumerate(tmp[0:9]):
+                    if x == 0:
+                        df.iloc[i+1,j] = df.iloc[i,j]
 
     def set_peek_time(self,peek_time):
         self.peek_time = peek_time
