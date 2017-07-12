@@ -65,6 +65,13 @@ class forceAnalyzer(DataReader):
             points.append([x,y,0])
         return points
 
+    def get_peek_action_point_for_trans(self):
+        xs,ys =self.get_peek_action_point()
+        points = []
+        for x,y in zip(xs,ys):
+            points.append([x,y,0.,1.])
+        return points
+
     def getNearestValue(self,array, num):
         """
         概要: リストからある値に最も近い値を返却する関数
@@ -242,6 +249,14 @@ class motionAnalyzer(DataReader):
         action_points = []
         for points in self.get_nearest_two_points():
             action_points.append(self.get_middle_point(points)[0])
+        return action_points
+
+    def get_action_point_for_trans(self):
+        action_points = []
+        for points in self.get_nearest_two_points():
+            tmp = list(self.get_middle_point(points)[0])
+            tmp.append(1.0)
+            action_points.append(tmp)
         return action_points
 
     def plot(self,analysis_id=0):
