@@ -198,12 +198,40 @@ class motionAnalyzer(DataReader):
         self.peek_time = []
         for x in tmp:
             self.peek_time.append(self.getNearestIndex(self.df_list[analysis_id]['time'].values ,x))
-        print(self.peek_time)
+
+    def get_peek_points(self, analysis_id=0):
+        tmp = self.df_list[analysis_id].iloc[self.peek_time].values
+        return tmp[:,:9]
+
+    def get_euclid_distance(self,vec):
+        return np.linalg.norm(vec)
+
+    def get_nearest_two_points(self):
+        for points in self.get_peek_points():
+            each_point = [[points[0:3]],[points[3:6]],[points[6:9]]]
+            points_num = [[0,1],[1,2],[2,0]]
+            distance = []
+            distance.append(np.array(each_point[0])-np.array(each_point[1]))
+            distance.append(np.array(each_point[1])-np.array(each_point[2]))
+            distance.append(np.array(each_point[2])-np.array(each_point[0]))
+            tmp = [100000,-1]
+            for i,dis in enumerate(distance):
+                tmp_dis = self.get_euclid_distance(dis)
+                if  tmp_dis < tmp[0]:
+                    tmp = [tmp_dis,i]
+            break
+        return [each_point[points_num[tmp[1]][0]],each_point[points_num[tmp[1]][1]]]
+
+    def get_middle_point(self,two_points):
+        return (np.array(two_points[0])+np.array(two_points[1]))/2
+
+    def get_action_point(self):
+        return self.get_middle_point(self.get_nearest_two_points())[0]
 
     def plot(self,analysis_id=0):
         motion_data = self.df_list[analysis_id].copy()
         column_name = motion_data.columns.values
-        print(column_name[0:len(column_name)-1])
+        # print(column_name[0:len(column_name)-1])
 
         f = plt.figure()
         plt.title('Motion c3d data', color='black')

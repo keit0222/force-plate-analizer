@@ -67,7 +67,6 @@ class DataReader:
                         target_label_position.append(i)
                         print('Label name', label_name)
                 print('Target label positon: ',target_label_position)
-                print('')
 
                 points_list = []
                 for i,points,analog in reader.read_frames():
