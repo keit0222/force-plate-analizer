@@ -58,6 +58,13 @@ class forceAnalyzer(DataReader):
         return [self.df_list[analysis_id]['action_x'].values[self.max_peek],
                 self.df_list[analysis_id]['action_y'].values[self.max_peek]]
 
+    def get_peek_action_point_for_converting(self):
+        xs,ys =self.get_peek_action_point()
+        points = []
+        for x,y in zip(xs,ys):
+            points.append([x,y,0])
+        return points
+
     def getNearestValue(self,array, num):
         """
         概要: リストからある値に最も近い値を返却する関数
@@ -220,13 +227,22 @@ class motionAnalyzer(DataReader):
                 if  tmp_dis < tmp[0]:
                     tmp = [tmp_dis,i]
             break
-        return [each_point[points_num[tmp[1]][0]],each_point[points_num[tmp[1]][1]]]
+
+        two_points = []
+        for points in self.get_peek_points():
+            each_point = [[points[0:3]],[points[3:6]],[points[6:9]]]
+            two_points.append([each_point[points_num[tmp[1]][0]],each_point[points_num[tmp[1]][1]]])
+
+        return two_points
 
     def get_middle_point(self,two_points):
         return (np.array(two_points[0])+np.array(two_points[1]))/2
 
     def get_action_point(self):
-        return self.get_middle_point(self.get_nearest_two_points())[0]
+        action_points = []
+        for points in self.get_nearest_two_points():
+            action_points.append(self.get_middle_point(points)[0])
+        return action_points
 
     def plot(self,analysis_id=0):
         motion_data = self.df_list[analysis_id].copy()

@@ -43,7 +43,7 @@ class DataReader:
         self.df_list = []
         self.read_data()
 
-        print('Data read finishd.')
+        print('Data read finished.')
 
     def read_data(self):
         for filename in self.filenames:
