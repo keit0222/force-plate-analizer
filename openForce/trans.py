@@ -66,3 +66,7 @@ class Trans():
 
     def meter2milli(self,meter):
         return meter*1000
+
+    def detect_force_plate_slope(self):
+        force_plate_position = self.motion_action_points.T
+        
