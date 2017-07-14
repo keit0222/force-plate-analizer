@@ -57,7 +57,26 @@ def get_rodrigues_rotation(n, theta): # n: the center of rotation vector, theta[
     a31 = -n[1]*np.sin(theta) + n[2]*n[0]*(1-np.cos(theta))
     a32 = n[0]*np.sin(theta)+n[1]*n[2]*(1-np.cos(theta))
     a33 = np.cos(theta)+np.power(n[2],2)*(1-np.cos(theta))
-    mat = np.array([[a11,a12,a13],
+    return np.array([[a11,a12,a13],
                      [a21,a22,a23],
                      [a31,a32,a33]])
-    return mat
+
+def get_rotation_matrix_from_quaternion(q):
+    a11 = np.power(q[0],2) + np.power(q[1],2) - np.power(q[2],2) - np.power(q[3],2)
+    a12 = 2 * (q[1]*q[2] - q[0]*q[3])
+    a13 = 2 * (q[1]*q[3] + q[0]*q[2])
+    a21 = 2 * (q[1]*q[2] + q[0]*q[3])
+    a22 = np.power(q[0],2) - np.power(q[1],2) + np.power(q[2],2) - np.power(q[3],2)
+    a23 = 2 * (q[2]*q[3] - q[0]*q[1])
+    a31 = 2 * (q[1]*q[3] - q[0]*q[2])
+    a32 = 2 * (q[2]*q[3] + q[0]*q[1])
+    a33 = np.power(q[0],2) - np.power(q[1],2) - np.power(q[2],2) + np.power(q[3],2)
+    return np.array([[a11,a12,a13],
+                     [a21,a22,a23],
+                     [a31,a32,a33]])
+
+def get_quaternion(n, theta):
+    n = np.array(n)
+    n = n/np.linalg.norm(n)
+    tmp = np.sin(theta/2.)*np.array(n)
+    return np.array([np.cos(theta/2.),tmp[0],tmp[1],tmp[2]])
