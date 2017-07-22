@@ -29,7 +29,7 @@ class Trans():
         # self.plot_gaussian()
 
         self.detect_force_plate_slope()
-        self.plot_estimate_result()
+        # self.plot_estimate_result()
 
     def get_trans(self):
         self.force_plate_action_points = np.array(self.force_cls.get_peek_action_point_for_trans()).T
@@ -83,9 +83,6 @@ class Trans():
     def meter2milli(self,meter):
         return meter*1000
 
-    def detect_force_plate_slope(self):
-        return show_rotation_info(self.get_trans()[0:3,0:3])
-
     def plot_estimate_result(self):
         fig = plt.figure()
         self.ax = Axes3D(fig)
@@ -101,4 +98,17 @@ class Trans():
         self.ax.set_xlim([-2.0,2.0])
         self.ax.set_ylim([-2.0,2.0])
         self.ax.set_zlim([-2.0,2.0])
+        self.ax.view_init(azim=90, elev=-90)
         plt.show()
+
+    def detect_force_plate_slope(self):
+        action_point = np.array([[0,0,0,1],[0.2,0.,0.,1],[0.,0.2,0.,1]])
+        plane_pos = []
+        for point in action_point:
+            plane_pos.append(np.dot(self.mat,point))
+        plane = get_plane_parameter(plane_pos)
+        plane_comp = get_plane_parameter(np.array([[0.,0.,0.],[1.,0.,0.],[0.,0.,1.]]))
+        plane_slope = get_two_plane_angle(plane, plane_comp)
+        print('####################')
+        print('Force plate slope: ', rad2deg(plane_slope), 'deg')
+        print('####################')

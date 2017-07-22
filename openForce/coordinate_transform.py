@@ -131,3 +131,18 @@ def deg2rad(degree):
 
 def rad2deg(radian):
     return radian/np.pi*180
+
+def get_normal_vector(point1, point2, point3):
+    vec1 = np.array([point2[0]-point1[0], point2[1]-point1[1], point2[2]-point1[2]])
+    vec2 = np.array([point3[0]-point1[0], point3[1]-point1[1], point3[2]-point1[2]])
+    return np.cross(vec1, vec2)
+
+def get_plane_parameter(plane_point):
+    normal = get_normal_vector(plane_point[0], plane_point[1], plane_point[2])
+    return [normal[0], normal[1], normal[2], -normal[0]*plane_point[0]-normal[1]*plane_point[1]-normal[2]*plane_point[2]]
+
+def get_two_plane_angle(plane_param1, plane_param2):
+    tmp1 = np.absolute(plane_param1[0]*plane_param2[0]+plane_param1[1]*plane_param2[1]+plane_param1[2]*plane_param2[2])
+    tmp2 = np.sqrt(np.power(plane_param1[0],2)+np.power(plane_param1[1],2)+np.power(plane_param1[2],2))
+    tmp3 = np.sqrt(np.power(plane_param2[0],2)+np.power(plane_param2[1],2)+np.power(plane_param2[2],2))
+    return np.arccos(tmp1/(tmp2*tmp3))
