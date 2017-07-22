@@ -7,6 +7,11 @@ import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
 
+from coordinate_transform import *
+
+# visualize
+from mpl_toolkits.mplot3d import Axes3D
+
 class Trans():
     def __init__(self):
         self.force_cls = fa.forceAnalyzer('..\\..\\20170721\\forcePlate\\','calib01.csv')
@@ -19,9 +24,12 @@ class Trans():
         self.mat = self.get_trans()
         self.trans_check()
         self.evaluate_trans()
-        self.force_cls.plot()
-        self.motion_cls.plot()
-        self.plot_gaussian()
+        # self.force_cls.plot()
+        # self.motion_cls.plot()
+        # self.plot_gaussian()
+
+        self.detect_force_plate_slope()
+        self.plot_estimate_result()
 
     def get_trans(self):
         self.force_plate_action_points = np.array(self.force_cls.get_peek_action_point_for_trans()).T
@@ -43,6 +51,12 @@ class Trans():
             # print('True value: ',true_value, ' Estimation value: ',estimation_value)
             point_diff.append(np.array(true_value)-np.array(estimation_value))
         return point_diff
+
+    def get_trans_position(self):
+        estimate_position = []
+        for point in self.force_plate_action_points.T:
+            estimate_position.append(np.dot(self.mat,point.T))
+        return estimate_position
 
     def evaluate_trans(self):
         diff = self.trans_check()
@@ -70,4 +84,21 @@ class Trans():
         return meter*1000
 
     def detect_force_plate_slope(self):
-        force_plate_position = self.motion_action_points.T
+        return show_rotation_info(self.get_trans()[0:3,0:3])
+
+    def plot_estimate_result(self):
+        fig = plt.figure()
+        self.ax = Axes3D(fig)
+        self.ax.set_xlabel('x')
+        self.ax.set_ylabel('y')
+        self.ax.set_zlabel('z')
+        estimate_pos = self.get_trans_position()
+        for pos in estimate_pos:
+            tmp = pos.tolist()
+            self.ax.plot([tmp[0]], [tmp[1]], [tmp[2]], "o", color="#00aa00", ms=4, mew=0.5)
+        for pos in self.motion_action_points.T.tolist():
+            self.ax.plot([pos[0]], [pos[1]], [pos[2]], "o", color="#aa0000", ms=4, mew=0.5)
+        self.ax.set_xlim([-2.0,2.0])
+        self.ax.set_ylim([-2.0,2.0])
+        self.ax.set_zlim([-2.0,2.0])
+        plt.show()
