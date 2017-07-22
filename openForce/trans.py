@@ -9,8 +9,8 @@ import matplotlib.cm as cm
 
 class Trans():
     def __init__(self):
-        self.force_cls = fa.forceAnalyzer('ForcePlate\\','test.csv')
-        self.motion_cls = fa.motionAnalyzer('optitrack\\','test.c3d')
+        self.force_cls = fa.forceAnalyzer('..\\..\\20170721\\forcePlate\\','calib01.csv')
+        self.motion_cls = fa.motionAnalyzer('..\\..\\20170721\\motive\\c3d\\','calibrate00.c3d',key_label='hummer')
         self.diff_norm = []
         peek_time = self.force_cls.get_peek_time()
         self.motion_cls.set_peek_time(peek_time)
@@ -19,6 +19,8 @@ class Trans():
         self.mat = self.get_trans()
         self.trans_check()
         self.evaluate_trans()
+        self.force_cls.plot()
+        self.motion_cls.plot()
         self.plot_gaussian()
 
     def get_trans(self):
@@ -69,4 +71,3 @@ class Trans():
 
     def detect_force_plate_slope(self):
         force_plate_position = self.motion_action_points.T
-        

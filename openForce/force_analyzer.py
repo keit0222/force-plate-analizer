@@ -169,8 +169,8 @@ class forceAnalyzer(DataReader):
         plt.close()
 
 class motionAnalyzer(DataReader):
-    def __init__(self,relative_data_folder,filename):
-        super().__init__(relative_data_folder,filename,data_freq=100)
+    def __init__(self,relative_data_folder,filename,key_label):
+        super().__init__(relative_data_folder,filename,data_freq=100,key_label_name=key_label)
         self.simple_modify_data()
         self.peek_time = 0
 

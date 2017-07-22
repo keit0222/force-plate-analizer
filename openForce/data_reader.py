@@ -15,13 +15,14 @@ import c3d
 class DataReader:
     def __init__(self,relative_data_folder,filename,data_freq=1000,
                  use_filename=True,ext_name='',use_ext_name=False,
-                 skiprows=0,column_name=[]):
+                 skiprows=0,column_name=[],key_label_name=''):
         self.filename = filename
         self.relative_data_folder = relative_data_folder
         self.data_freq = data_freq
         self.skiprows = skiprows
         self.column_name = column_name
         self.data_type = ''
+        self.key_label_name = key_label_name
         if use_filename == True:
             self.filenames = [self.filename]
         else:
@@ -60,7 +61,7 @@ class DataReader:
                 self.df_list.append(force_plate_df)
             elif self.data_type == 'c3d':
                 reader = c3d.Reader(open(relative_data_path, 'rb'))
-                key_label = 'Tonkachi'
+                key_label = self.key_label_name
                 target_label_position = []
                 for i,label_name in enumerate(reader.point_labels):
                     if key_label in label_name:
