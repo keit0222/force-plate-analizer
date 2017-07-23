@@ -20,29 +20,22 @@ from data_reader import DataReader
 
 import os
 
+from coordinate_transform import *
+
 class forceAnalyzer(DataReader):
-    def __init__(self,relative_data_folder,filename):
+    def __init__(self,relative_data_folder,filename,plate_rotation=20):
         super().__init__(relative_data_folder,filename,skiprows=6,
                          column_name=['Fx','Fy','Fz','Mx','My','Mz','Syncro','ExtIn1','ExtIn2'])
+        self.plate_rotation = plate_rotation
+
         self.extract_syncronized_data()
 
         self.max_peek=[]
         self.get_max_peek()
 
-        # # フォント一覧
-        # fonts = fm.findSystemFonts()
-        # # フォントのパスと名前を取得、とりあえず10個表示
-        # print([[str(font), fm.FontProperties(fname=font).get_name()] for font in fonts[:20]])
+        self.modify_force_plate_raw(scale=2.0)
 
-        # Setting at the time of visualizing
-        # plt.style.use('ggplot')
-        # font = {'family' : 'Yu Gothic'}
-        # matplotlib.rc('font', **font)
-
-        self.action_x = 0
-        self.action_y = 0
-        self.threshold_Fz = 5.0
-        self.get_action_point(scale=2.)
+        self.get_action_point(threshold=40)
 
     def extract_syncronized_data(self,analysis_id=0):
         df = self.df_list[analysis_id]
@@ -116,14 +109,14 @@ class forceAnalyzer(DataReader):
         force_cutted_df.plot(y='Fz', figsize=(16,4), alpha=0.5)
         force_cutted_df.to_csv('force_plate_cutted_data_a6.csv')
 
-    def get_action_point(self,analysis_id=0,scale=1.):
+    def get_action_point(self,analysis_id=0,scale=1., threshold=20):
         Mx = self.df_list[analysis_id]['Mx'].values*scale
         My = self.df_list[analysis_id]['My'].values*scale
         Fz = self.df_list[analysis_id]['Fz'].values*scale
         tmp_action_x = []
         tmp_action_y = []
         for mx,my,f in zip(Mx,My,Fz):
-            if abs(f) > self.threshold_Fz:
+            if abs(f) > threshold:
                 tmp_action_x.append(my/f)
                 tmp_action_y.append(mx/f)
             else:
@@ -133,6 +126,20 @@ class forceAnalyzer(DataReader):
         self.action_y = np.array(tmp_action_y)
         self.df_list[analysis_id]['action_x'] = self.action_x
         self.df_list[analysis_id]['action_y'] = self.action_y
+
+    def modify_force_plate_raw(self, analysis_id=0, scale=1.0):
+        Fx = self.df_list[analysis_id]['Fx'].values*scale
+        Fy = self.df_list[analysis_id]['Fy'].values*scale
+        Fz = self.df_list[analysis_id]['Fz'].values*scale
+        Mx = self.df_list[analysis_id]['Mx'].values*scale
+        My = self.df_list[analysis_id]['My'].values*scale
+        Mz = self.df_list[analysis_id]['Mz'].values*scale
+        self.df_list[analysis_id]['Fx'] = Fx
+        self.df_list[analysis_id]['Fy'] = Fy
+        self.df_list[analysis_id]['Fz'] = Fz
+        self.df_list[analysis_id]['Mx'] = Mx
+        self.df_list[analysis_id]['My'] = My
+        self.df_list[analysis_id]['Mz'] = Mz
 
     def add_motion_coordinate_action_point(self, simultaneous_trans_matrix,analysis_id=0):
         motion_coordinate_action_point_x = []
@@ -152,6 +159,23 @@ class forceAnalyzer(DataReader):
         self.df_list[analysis_id]['motion_coordinate_action_point_x'] = motion_coordinate_action_point_x
         self.df_list[analysis_id]['motion_coordinate_action_point_y'] = motion_coordinate_action_point_y
         self.df_list[analysis_id]['motion_coordinate_action_point_z'] = motion_coordinate_action_point_z
+
+    def add_corrected_force_data(self,analysis_id=0, scale=1.0):
+        corrected_Fx = []
+        corrected_Fy = []
+        corrected_Fz = []
+        Fx = self.df_list[analysis_id]['Fx'].values*scale
+        Fy = self.df_list[analysis_id]['Fy'].values*scale
+        Fz = self.df_list[analysis_id]['Fz'].values*scale
+        for fx, fy, fz in zip(Fx,Fy,Fz):
+            arr = np.array([fx, fy, fz])
+            corrected_force = np.dot(get_rotation_x(deg2rad(self.plate_rotation)),arr)
+            corrected_Fx.append(corrected_force[0])
+            corrected_Fy.append(corrected_force[1])
+            corrected_Fz.append(corrected_force[2])
+        self.df_list[analysis_id]['corrected_Fx'] = corrected_Fx
+        self.df_list[analysis_id]['corrected_Fy'] = corrected_Fy
+        self.df_list[analysis_id]['corrected_Fz'] = corrected_Fz
 
     def save_data(self, save_dir, filename, analysis_id=0, update=False):
         if not os.path.isdir(save_dir+'synchro'):

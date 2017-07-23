@@ -20,7 +20,7 @@ import glob
 import pickle
 
 class Synchro():
-    def __init__(self, force_data_dir='',force_file_ext='csv',exception_word='calib'):
+    def __init__(self, force_data_dir='',force_file_ext='csv',exception_word='calib',plate_rotation=20):
         self.force_data_dir = force_data_dir
         self.load_trans_info()
 
@@ -34,10 +34,12 @@ class Synchro():
                 with open(force_data_dir+filename.split('.')[0]+'.pkl', mode='rb') as f:
                     self.force_cls = pickle.load(f)
             else:
-                self.force_cls = fa.forceAnalyzer(force_data_dir, filename)
+                self.force_cls = fa.forceAnalyzer(force_data_dir, filename, plate_rotation=plate_rotation)
                 with open(force_data_dir+filename.split('.')[0]+'.pkl', mode='wb') as f:
                     pickle.dump(self.force_cls, f)
+            # self.force_cls.get_action_point(threshold=40)
             self.force_cls.add_motion_coordinate_action_point(self.mat)
+            self.force_cls.add_corrected_force_data()
             self.force_cls.save_data(self.force_data_dir, filename, update=True)
 
     def load_trans_info(self):

@@ -18,8 +18,8 @@ import os
 # serialize and de-serialize library
 import pickle
 
-class Calibrate():
-    def __init__(self, force_data_dir='',force_filename='',motion_data_dir='', motion_filename='',rigid_label=''):
+class Calibrate(object):
+    def __init__(self, force_data_dir='',force_filename='',motion_data_dir='', motion_filename='',rigid_label='', plot=False):
         self.force_data_dir = force_data_dir
 
         print(force_data_dir+force_filename.split('.')[0]+'.pkl')
@@ -52,12 +52,14 @@ class Calibrate():
         self.mat = self.get_trans()
         self.trans_check()
         self.evaluate_trans()
-        self.force_cls.plot()
-        self.motion_cls.plot()
-        self.plot_gaussian()
+
+        if plot == True:
+            self.force_cls.plot()
+            self.motion_cls.plot()
+            self.plot_gaussian()
+            self.plot_estimate_result()
 
         self.detect_force_plate_slope()
-        self.plot_estimate_result()
 
     def save_trans_info(self):
         print(self.force_data_dir+'trans_mat'+'.pkl')
