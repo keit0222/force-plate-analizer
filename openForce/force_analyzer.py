@@ -18,6 +18,8 @@ import copy
 
 from data_reader import DataReader
 
+import os
+
 class forceAnalyzer(DataReader):
     def __init__(self,relative_data_folder,filename):
         super().__init__(relative_data_folder,filename,skiprows=6,
@@ -33,13 +35,13 @@ class forceAnalyzer(DataReader):
         # print([[str(font), fm.FontProperties(fname=font).get_name()] for font in fonts[:20]])
 
         # Setting at the time of visualizing
-        plt.style.use('ggplot')
-        font = {'family' : 'Yu Gothic'}
-        matplotlib.rc('font', **font)
+        # plt.style.use('ggplot')
+        # font = {'family' : 'Yu Gothic'}
+        # matplotlib.rc('font', **font)
 
         self.action_x = 0
         self.action_y = 0
-        self.threshold_Fz = 3.0
+        self.threshold_Fz = 5.0
         self.get_action_point(scale=2.)
 
     def extract_syncronized_data(self,analysis_id=0):
@@ -47,6 +49,7 @@ class forceAnalyzer(DataReader):
         df_copy = df[df.ExtIn1 == 1].copy()
         df_copy['time'] = df_copy['time'].values - df_copy['time'].values[0]
         self.df_list[analysis_id] = df_copy
+        self.df_list[analysis_id] = self.df_list[analysis_id].drop(['Syncro','ExtIn1','ExtIn2'], axis=1)
 
     def moving_filter(self,x,window_size,min_periods):
         return pd.Series(x).rolling(window=window_size, min_periods=min_periods, center=True).mean().values
@@ -130,7 +133,35 @@ class forceAnalyzer(DataReader):
         self.action_y = np.array(tmp_action_y)
         self.df_list[analysis_id]['action_x'] = self.action_x
         self.df_list[analysis_id]['action_y'] = self.action_y
-        self.df_list[analysis_id].to_csv('test.csv')
+
+    def add_motion_coordinate_action_point(self, simultaneous_trans_matrix,analysis_id=0):
+        motion_coordinate_action_point_x = []
+        motion_coordinate_action_point_y = []
+        motion_coordinate_action_point_z = []
+        for x, y in zip(self.action_x, self.action_y):
+            if x == -1 or y == -1:
+                motion_coordinate_action_point_x.append(0)
+                motion_coordinate_action_point_y.append(0)
+                motion_coordinate_action_point_z.append(0)
+            else:
+                arr = np.array([x, y, 0., 1.])
+                motion_pos = np.dot(simultaneous_trans_matrix, arr)
+                motion_coordinate_action_point_x.append(motion_pos[0])
+                motion_coordinate_action_point_y.append(motion_pos[1])
+                motion_coordinate_action_point_z.append(motion_pos[2])
+        self.df_list[analysis_id]['motion_coordinate_action_point_x'] = motion_coordinate_action_point_x
+        self.df_list[analysis_id]['motion_coordinate_action_point_y'] = motion_coordinate_action_point_y
+        self.df_list[analysis_id]['motion_coordinate_action_point_z'] = motion_coordinate_action_point_z
+
+    def save_data(self, save_dir, filename, analysis_id=0, update=False):
+        if not os.path.isdir(save_dir+'synchro'):
+            print('Creating new save folder ...')
+            print('Save path : ', save_dir+'synchro')
+            os.mkdir(save_dir+'synchro')
+        if not os.path.isfile(save_dir+'synchro\\'+filename) or update == True:
+            df_copy = self.df_list[analysis_id].copy()
+            df_copy = df_copy.set_index('time')
+            df_copy.to_csv(save_dir+'synchro\\'+filename)
 
     def plot_peek_action_point(self):
         xs,ys =self.get_peek_action_point()
