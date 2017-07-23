@@ -12,15 +12,43 @@ from coordinate_transform import *
 # visualize
 from mpl_toolkits.mplot3d import Axes3D
 
+# check whether file exist or not
+import os
+
+# serialize and de-serialize library
+import pickle
+
 class Calibrate():
-    def __init__(self,force_data_dir='',force_filename='',motion_data_dir='', motion_filename='',rigid_label):
-        self.force_cls = fa.forceAnalyzer(force_data_dir, force_filename)
-        self.motion_cls = fa.motionAnalyzer(motion_data_dir, motion_filename, key_label=rigid_label)
+    def __init__(self, force_data_dir='',force_filename='',motion_data_dir='', motion_filename='',rigid_label=''):
+        self.force_data_dir = force_data_dir
+
+        print(force_data_dir+force_filename.split('.')[0]+'.pkl')
+        if os.path.isfile(force_data_dir+force_filename.split('.')[0]+'.pkl'):
+            with open(force_data_dir+force_filename.split('.')[0]+'.pkl', mode='rb') as f:
+                self.force_cls = pickle.load(f)
+        else:
+            self.force_cls = fa.forceAnalyzer(force_data_dir, force_filename)
+            with open(force_data_dir+force_filename.split('.')[0]+'.pkl', mode='wb') as f:
+                pickle.dump(self.force_cls, f)
+
+        print(motion_data_dir+motion_filename.split('.')[0]+'.pkl')
+        if os.path.isfile(motion_data_dir+motion_filename.split('.')[0]+'.pkl'):
+            with open(motion_data_dir+motion_filename.split('.')[0]+'.pkl', mode='rb') as f:
+                self.motion_cls = pickle.load(f)
+        else:
+            self.motion_cls = fa.motionAnalyzer(motion_data_dir, motion_filename, key_label=rigid_label)
+            with open(motion_data_dir+motion_filename.split('.')[0]+'.pkl', mode='wb') as f:
+                pickle.dump(self.motion_cls, f)
+
         self.diff_norm = []
         peek_time = self.force_cls.get_peek_time()
         self.motion_cls.set_peek_time(peek_time)
         self.force_plate_action_points = 0
         self.motion_action_points = 0
+
+        self.save_trans_info()
+        self.load_trans_info()
+
         self.mat = self.get_trans()
         self.trans_check()
         self.evaluate_trans()
@@ -30,6 +58,19 @@ class Calibrate():
 
         self.detect_force_plate_slope()
         self.plot_estimate_result()
+
+    def save_trans_info(self):
+        print(self.force_data_dir+'trans_mat'+'.pkl')
+        if not os.path.isfile(self.force_data_dir+'trans_mat'+'.pkl'):
+            with open(self.force_data_dir+'trans_mat'+'.pkl', mode='wb') as f:
+                print('trans matrix', self.get_trans())
+                pickle.dump(self.get_trans(), f)
+
+    def load_trans_info(self):
+        if os.path.isfile(self.force_data_dir+'trans_mat'+'.pkl'):
+            with open(self.force_data_dir+'trans_mat'+'.pkl', mode='rb') as f:
+                self.mat = pickle.load(f)
+                print('loaded trans matrix',self.mat)
 
     def get_trans(self):
         self.force_plate_action_points = np.array(self.force_cls.get_peek_action_point_for_trans()).T
