@@ -1,8 +1,9 @@
 import numpy as np
 import force_analyzer as fa
-import trans
+import calibrate
+
 def main():
-    t = trans.Trans()
+    t = calibrate.Calibrate()
     # print(t.mat)
     # force_cls = fa.forceAnalyzer('ForcePlate\\','test.csv')
     # motion_cls = fa.motionAnalyzer('optitrack\\','test.c3d')

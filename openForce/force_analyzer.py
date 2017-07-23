@@ -83,7 +83,7 @@ class forceAnalyzer(DataReader):
         idx = np.abs(array - num).argmin()
         return array[idx]
 
-    def get_max_peek(self,threshold=10.,analysis_id=0):
+    def get_max_peek(self,threshold=5.,analysis_id=0):
         force_plate_data=self.df_list[analysis_id]
         self.max_peek = list(argrelmax(force_plate_data['Fz'].values,order=1000)[0])
         tmp = copy.deepcopy(self.max_peek)

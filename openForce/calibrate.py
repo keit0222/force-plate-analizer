@@ -12,10 +12,10 @@ from coordinate_transform import *
 # visualize
 from mpl_toolkits.mplot3d import Axes3D
 
-class Trans():
-    def __init__(self):
-        self.force_cls = fa.forceAnalyzer('..\\..\\20170721\\forcePlate\\','calib01.csv')
-        self.motion_cls = fa.motionAnalyzer('..\\..\\20170721\\motive\\c3d\\','calibrate00.c3d',key_label='hummer')
+class Calibrate():
+    def __init__(self,force_data_dir='',force_filename='',motion_data_dir='', motion_filename='',rigid_label):
+        self.force_cls = fa.forceAnalyzer(force_data_dir, force_filename)
+        self.motion_cls = fa.motionAnalyzer(motion_data_dir, motion_filename, key_label=rigid_label)
         self.diff_norm = []
         peek_time = self.force_cls.get_peek_time()
         self.motion_cls.set_peek_time(peek_time)
