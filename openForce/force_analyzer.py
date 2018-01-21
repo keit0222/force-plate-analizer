@@ -23,8 +23,8 @@ import os
 from coordinate_transform import *
 
 class forceAnalyzer(DataReader):
-    def __init__(self,relative_data_folder,filename,plate_rotation=20):
-        super().__init__(relative_data_folder,filename,skiprows=6,
+    def __init__(self,relative_data_folder,filenames,plate_rotation=20):
+        super().__init__(relative_data_folder,filenames,skiprows=6,
                          column_name=['Fx','Fy','Fz','Mx','My','Mz','Syncro','ExtIn1','ExtIn2'])
         self.plate_rotation = plate_rotation
 
@@ -90,7 +90,9 @@ class forceAnalyzer(DataReader):
     def get_peek_time(self,analysis_id=0):
         return self.df_list[analysis_id]['time'].values[self.max_peek]
 
-    def get_first_landing_point(self):
+    def get_first_landing_point(self, analysis_id=0):
+        force_plate_data = self.df_list[analysis_id].copy()
+        
         x_max_peek = argrelmax(force_plate_data['Fz'].values,order=50)
         x_min_peek = argrelmin(force_plate_data['Fz'].values,order=100)
         # print(x_min_peek,x_max_peek)
@@ -100,11 +102,13 @@ class forceAnalyzer(DataReader):
             if abs(force_plate_data['Fz'].values[value] - force_plate_data['Fz'].values[getNearestValue(x_min_peek[0],value)]) > 100:
                 offset_peek_list.append(value)
         # print(offset_peek_list)
-        first_landing_point = offset_peek_list[0]
-        print('first landing point is ',first_landing_point)
+        self.first_landing_point = offset_peek_list[0]
+        print('first landing point is ',self.first_landing_point)
 
     def export_from_first_landing_point(self):
-        force_cutted_df = force_plate_data[first_landing_point:len(force_plate_data)]
+        force_plate_data = self.df_list[analysis_id].copy()
+
+        force_cutted_df = force_plate_data[self.first_landing_point:len(force_plate_data)]
         print(force_cutted_df)
         force_cutted_df.plot(y='Fz', figsize=(16,4), alpha=0.5)
         force_cutted_df.to_csv('force_plate_cutted_data_a6.csv')
@@ -328,3 +332,8 @@ class motionAnalyzer(DataReader):
         f.subplots_adjust(right=0.8)
         plt.show()
         plt.close()
+
+if __name__ == '__main__':
+    import force_analyzer as fa
+    fp = fa.forceAnalyzer('./ForcePlate/', ['a03.csv', 'a05.csv'], plate_rotation=0)
+    print('The number of loaded data: ', len(fp.df_list))

@@ -24,7 +24,10 @@ class DataReader:
         self.data_type = ''
         self.key_label_name = key_label_name
         if use_filename == True:
-            self.filenames = [self.filename]
+            if isinstance(self.filename, str):
+                self.filenames = [self.filename]
+            else:
+                self.filenames = self.filename
         else:
             if use_ext_name == True:
                 path = self.relative_data_folder + '*' + ext_name
