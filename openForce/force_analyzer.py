@@ -26,16 +26,17 @@ class forceAnalyzer(DataReader):
     def __init__(self,relative_data_folder,filenames,plate_rotation=20):
         super().__init__(relative_data_folder,filenames,skiprows=6,
                          column_name=['Fx','Fy','Fz','Mx','My','Mz','Syncro','ExtIn1','ExtIn2'])
+
         self.plate_rotation = plate_rotation
+        self.set_analysis_target(0)
 
-        self.extract_syncronized_data()
-
+    def set_analysis_target(self, analysis_id=0, scale=2.0):
+        self.extract_syncronized_data(analysis_id=analysis_id)
+        self.get_first_landing_point(analysis_id=analysis_id)
         self.max_peek=[]
-        self.get_max_peek()
-
-        self.modify_force_plate_raw(scale=2.0)
-
-        self.get_action_point(threshold=40)
+        self.get_max_peek(analysis_id=analysis_id)
+        self.modify_force_plate_raw(analysis_id=analysis_id, scale=scale)
+        self.get_action_point(analysis_id=analysis_id, threshold=40)
 
     def extract_syncronized_data(self,analysis_id=0):
         df = self.df_list[analysis_id]
@@ -99,18 +100,19 @@ class forceAnalyzer(DataReader):
 
         offset_peek_list= []
         for value in x_max_peek[0]:
-            if abs(force_plate_data['Fz'].values[value] - force_plate_data['Fz'].values[getNearestValue(x_min_peek[0],value)]) > 100:
+            if abs(force_plate_data['Fz'].values[value] - force_plate_data['Fz'].values[self.getNearestValue(x_min_peek[0],value)]) > 100:
                 offset_peek_list.append(value)
         # print(offset_peek_list)
         self.first_landing_point = offset_peek_list[0]
         print('first landing point is ',self.first_landing_point)
 
-    def export_from_first_landing_point(self):
+    def export_from_first_landing_point(self, analysis_id=0):
         force_plate_data = self.df_list[analysis_id].copy()
 
+        self.get_first_landing_point(analysis_id=analysis_id)
         force_cutted_df = force_plate_data[self.first_landing_point:len(force_plate_data)]
-        print(force_cutted_df)
-        force_cutted_df.plot(y='Fz', figsize=(16,4), alpha=0.5)
+        # print(force_cutted_df)
+        # force_cutted_df.plot(y='Fz', figsize=(16,4), alpha=0.5)
         force_cutted_df.to_csv('force_plate_cutted_data_a6.csv')
 
     def get_action_point(self,analysis_id=0,scale=1., threshold=20):
@@ -222,6 +224,8 @@ class forceAnalyzer(DataReader):
         plt.title('Force plate csv data when liftting up object', color='black')
         force_plate_data.plot(x='time',y=column_name[0:3], figsize=(16,4), alpha=0.5,ax=f.gca())
         plt.plot(force_plate_data['time'].values[self.max_peek], force_plate_data['Fz'].values[self.max_peek], "ro")
+        if self.first_landing_point is not 0:
+            plt.plot(force_plate_data['time'].values[self.first_landing_point], force_plate_data['Fz'].values[self.first_landing_point], "bo")
         plt.legend(loc='center left', bbox_to_anchor=(1.0, 0.5))
         f.subplots_adjust(right=0.8)
         plt.show()
@@ -337,3 +341,7 @@ if __name__ == '__main__':
     import force_analyzer as fa
     fp = fa.forceAnalyzer('./ForcePlate/', ['a03.csv', 'a05.csv'], plate_rotation=0)
     print('The number of loaded data: ', len(fp.df_list))
+    fp.set_analysis_target(1)
+    # fp.get_first_landing_point(analysis_id=0)
+    fp.plot(analysis_id=1)
+    print(fp.max_peek)
