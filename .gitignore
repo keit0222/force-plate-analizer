@@ -99,3 +99,11 @@ ENV/
 
 # mypy
 .mypy_cache/
+
+# force plate and optitrack data
+/ForcePlate/
+/optitrack/
+*.csv
+*.c3d
+
+# specific exceptional data
